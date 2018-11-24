@@ -1,6 +1,9 @@
 {
-  "name": "trello-clone",
+  "name": "simple-trello-app",
   "version": "0.1.0",
+  "description": "An simple trello app made with Vue.js",
+  "repository": "https://github.com/hasansujon786/simple-trello-app",
+  "author": "Hasan Mahmud <hasansujon786@gmail.com>",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -14,7 +17,7 @@
     "vuedraggable": "^2.16.0",
     "vuex": "^3.0.1"
   },
-  "homepage": "https://hasansujon786.github.io/trello-app",
+  "homepage": "https://hasansujon786.github.io/simple-trello-app",
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.0.5",
     "@vue/cli-plugin-eslint": "^3.0.5",
