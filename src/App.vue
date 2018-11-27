@@ -1,9 +1,7 @@
 <template>
   <div id="app">
       <router-link to="/" class="home-link">
-        <div id="nav">
           Home
-        </div>
       </router-link>
     <router-view/>
     <div @click="saveToLoacal" class="save-btn">
@@ -20,8 +18,8 @@ export default {
     }
   },
   created() {
-    this.$store.dispatch('getDatafmLocalNow')
     console.log('creted');
+    this.$store.dispatch('getDatafmLocalNow')
   }
 }
 </script>
@@ -29,9 +27,8 @@ export default {
 
 <style lang="sass">
 body
-  height: 100vh
+  // height: 100vh
   background: #282828
-  // color: #fff
 #app 
   font-family: 'Avenir', Helvetica, Arial, sans-serif
   -webkit-font-smoothing: antialiased
@@ -39,20 +36,23 @@ body
   color: #2c3e50
   
 
-#nav
+.home-link
+  text-decoration: none
+  color: #fff
+  font-weight: bold
+  position: relative
   width: 80px
   height: 80px
+  display: block
   border-radius: 100px
   background: #42b983
   text-align: center
   line-height: 80px
   margin: 20px auto 40px
-  cursor: pointer
-.home-link
-  text-decoration: none
-  color: #fff
-  font-weight: bold
-  
+  &:hover
+    text-decoration: none
+    box-shadow: 0 0 12px rgba(66, 185, 131, 0.4)
+
 .save-btn
   width: 70px
   height: 70px
@@ -64,7 +64,7 @@ body
   cursor: pointer
   color: #fff
   font-weight: bold
-  position: absolute
+  position: fixed
   right: 30px
   bottom: 30px
 </style>

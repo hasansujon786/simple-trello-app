@@ -61,7 +61,7 @@ export default new Vuex.Store({
     set_addNewTextAreaNow(state, order) {
       state.projects[order.projIdx].boards.push({
         name: order.newTextAreaName,
-        text: 'Put your texts here.',
+        text: 'Double click on the texts to enter edit mood.',
         isTextArea: true,
       })
     }

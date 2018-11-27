@@ -1,65 +1,91 @@
 <template>
   <div :class="[{'col-3': !isTextArea}, {'col-6': isTextArea}]">
-    <div class="board card mb-4" :class="[{'bg-info': isTextArea}, {'bg-teal': !isTextArea}]" :id="isTextEditMood">
-      <div class="card-header"  @dblclick="showRenameBoardMenu">
+    <div
+      class="board card mb-4"
+      :class="[{'bg-info': isTextArea}, {'bg-teal': !isTextArea}, {'shakeBox': shake}]"
+      :id="isTextEditMood"
+    >
+      <div class="card-header" @dblclick="showRenameBoardInput">
         <!-- header -->
         <div @click="delBoard" class="deleteIcon board__delBtn bg-danger">X</div>
         <div v-if="showBrdNamdChange">
           <!-- Board rename input -->
-          <input class="form-control" @keyup.esc="showBrdNamdChange = false" @keydown.enter="showBrdNamdChange = false" v-model.lazy="board.name">
+          <input
+            placeholder="Board Name"
+            ref="focus"
+            class="form-control header__input"
+            @blur="hideRenameBoardInput"
+            @keyup.esc="hideRenameBoardInput"
+            @keydown.enter="hideRenameBoardInput"
+            v-model.lazy="board.name"
+          >
         </div>
-        <span v-else>
-          {{ board.name }} |
-          {{ isTextArea }} ha
+        <span class="board__name" v-else>
+          {{ board.name.length == 0 ? "Board Name" : board.name }}
+          <!-- {{ isTextArea }} -->
           <!-- {{ boardIndex }} -->
         </span>
         <!-- header end -->
       </div>
-      <div class="card-body" >
-            
-        <figure  @dblclick="showTextInputArea = true" v-if="isTextArea">
-          <!--  text Area input -->
+      <div class="card-body">
+        <!--  text Area -->
+        <figure @dblclick="showTextInputAreaNow" v-if="isTextArea">
           <div v-if="showTextInputArea">
-            <textarea v-model="board.text"  @blur="updateTextArea"  @keyup.enter.ctrl="updateTextArea" @keyup.esc="updateTextArea" class="board__textArea bg-secondary" rows="10" ></textarea>
+            <textarea
+              ref="focus"
+              v-model="board.text"
+              @blur="updateTextArea"
+              @keyup.enter.ctrl="updateTextArea"
+              @keyup.esc="updateTextArea"
+              class="board__textArea bg-secondary"
+              rows="10"
+            ></textarea>
           </div>
           <!-- texts -->
           <div class="board__text" v-else>
-            <div @click="showTextInputArea = true"  class="board-btn float-right">E</div>
+            <div @click="showTextInputAreaNow" class="board-btn float-right">E</div>
             <p>{{ board.text }}</p>
           </div>
         </figure>
 
-
-
+        <!-- task board -->
         <figure v-else>
-          <!-- task area body -->
           <input
+            @focus="disableDrag('on')"
+            @blur="disableDrag('off')"
             v-model="newTaskName"
             @keyup.enter="addNewTask"
             type="text"
-            class="form-control form-control--task bg-teal"
-            placeholder="New Task">
+            class="animated form-control form-control--task bg-teal"
+            autofocus
+            placeholder="New Task Name"
+            :class="{'shakeBox-input': shake}"
+          >
           <!-- tasks -->
           <draggable
             v-model="myTaskList"
             :options="{group:'task'}"
             @start="drag=true"
-            @end="drag=false">
-            <div
-              @dblclick="task.completed = !task.completed"
-              :class="{'bg-tasks--done': task.completed}"
-              class="list-group-item task mt-2 bg-teal"
-              v-for="(task, taskIndex) in board.tasks"
-              :key="taskIndex">
-              {{ task.name }}
-              <!-- {{ task.completed }} -->
-              <span @click="delTask(taskIndex)" class="deleteIcon task__delBtn bg-danger" >X</span>
-            </div>
+            @end="drag=false"
+          >
+            <transition-group name="tasks" mode="out-in">
+              <div
+                @dblclick="task.completed = !task.completed"
+                :class="{'bg-tasks--done': task.completed}"
+                class="list-group-item task mt-2 bg-teal"
+                v-for="(task, taskIndex) in board.tasks"
+                :key="task.name"
+              >
+                {{ task.name }}
+                <!-- {{ task.completed }} -->
+                <span @click="delTask(taskIndex)" class="deleteIcon task__delBtn bg-danger">X</span>
+              </div>
+            </transition-group>
           </draggable>
         </figure>
-      </div> 
+      </div>
     </div>
-    <!-- card body end -->
+    <!-- card end -->
   </div>
 </template>
 
@@ -70,11 +96,10 @@ export default {
   data() {
     return {
       newTaskName: '',
-      showDelBtn: false,
+      newBoardName: '',
       showBrdNamdChange: false,
-      newBoardName: 'New task board',
       showTextInputArea: false,
-      newText: ''
+      shake: false,
     }
   },
   props: ['board', 'boardIndex', 'prjIndex'],
@@ -102,13 +127,20 @@ export default {
   },
   methods: {
     addNewTask() {
-      const order = {
-        prjIndx: this.prjIndex,
-        bordIndx: this.boardIndex,
-        name: this.newTaskName
+      if(this.newTaskName.length > 0) {
+        const order = {
+          prjIndx: this.prjIndex,
+          bordIndx: this.boardIndex,
+          name: this.newTaskName
+        }
+        this.$store.dispatch('addNewTaskNow', order)
+        this.newTaskName = ''
+      } else {
+        this.shake = true
+        setTimeout(() => {
+          this.shake = false
+        }, 1200);
       }
-      this.$store.dispatch('addNewTaskNow', order)
-      this.newTaskName = ''
     },
     delBoard() {
       const indxs = {
@@ -125,25 +157,36 @@ export default {
       }
       this.$store.dispatch('delTaskNow', indxs)
     },
-    showRenameBoardMenu() {
+    showRenameBoardInput() {
       this.showBrdNamdChange = true
+      this.setFocus()
+      this.disableDrag('on')
     },
-    renameBoard() {
-      //  = this.$store.state.projects[this.prjIndex].boards[this.boardIndex].name
-      const order = {
-        newName: this.newBoardName,
-        prjIndex: this.prjIndex,
-        boardIndex: this.boardIndex
-      }
-      this.$store.dispatch('renameBoardNow', order)
+    hideRenameBoardInput() {
       this.showBrdNamdChange = false
+      this.disableDrag('off')
+    },
+    setFocus() {
+      setTimeout(() => {
+        this.$refs.focus.focus()
+      }, 300);
+    },
+    showTextInputAreaNow() {
+      this.showTextInputArea = true
+      this.setFocus()
+      this.disableDrag('on')
     },
     updateTextArea() {
       this.showTextInputArea = false
+      this.disableDrag('off')
     },
-    consoleSomething() {
-      console.log('hasan mahmud')
+    disableDrag(key) {
+      // it will disable the drag of boards
+      let value = false
+      key == 'on' ? value = true : value = false
+      this.$emit('disableDrag-em', value)
     }
+
     
     
     
@@ -151,7 +194,8 @@ export default {
   },
   components: {
     draggable
-  }
+  },
+
 }
 </script>
 
@@ -176,6 +220,12 @@ export default {
 }
 .card-header {
   cursor: pointer;
+  font-weight: 700;
+  font-size: 18px;
+  text-align: center;
+}
+.board {
+  min-height: 378px;
 }
 .board__text {
   white-space: pre-line;
@@ -191,11 +241,11 @@ export default {
 .bg-teal {
   background: #20c997;
 }
-.bg-tasks--done {
+.bg-tasks--done, .bg-tasks--done:hover {
   background: hsl(162, 73%, 44%);
   color: #2d8067;
   border: 1px solid hsl(162, 65%, 44%);
-
+  text-decoration: line-through;
 }
 .form-control--task {
   border: 1px solid rgba(0, 0, 0, 0.125);
@@ -204,5 +254,159 @@ export default {
   background: hsl(162, 65%, 46%);
   border: 1px solid hsl(157, 94%, 36%);
 }
+.header__input {
+  background: #d6d7da !important;
+}
+.tasks-enter-active {
+  animation: bounceIn 0.75s;
+}
+.shakeBox {
+  animation: shake 1s ease-in-out;
+}
+.shakeBox-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(87, 189, 4, 0.6);
+}
 
+
+
+@-webkit-keyframes shake {
+  from,
+  to {
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    -webkit-transform: translate3d(-10px, 0, 0);
+    transform: translate3d(-10px, 0, 0);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    -webkit-transform: translate3d(10px, 0, 0);
+    transform: translate3d(10px, 0, 0);
+  }
+}
+
+@keyframes shake {
+  from,
+  to {
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    -webkit-transform: translate3d(-10px, 0, 0);
+    transform: translate3d(-10px, 0, 0);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    -webkit-transform: translate3d(10px, 0, 0);
+    transform: translate3d(10px, 0, 0);
+  }
+}
+
+
+@-webkit-keyframes bounceIn {
+  from,
+  20%,
+  40%,
+  60%,
+  80%,
+  to {
+    -webkit-animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+
+  0% {
+    opacity: 0;
+    -webkit-transform: scale3d(0.3, 0.3, 0.3);
+    transform: scale3d(0.3, 0.3, 0.3);
+  }
+
+  20% {
+    -webkit-transform: scale3d(1.1, 1.1, 1.1);
+    transform: scale3d(1.1, 1.1, 1.1);
+  }
+
+  40% {
+    -webkit-transform: scale3d(0.9, 0.9, 0.9);
+    transform: scale3d(0.9, 0.9, 0.9);
+  }
+
+  60% {
+    opacity: 1;
+    -webkit-transform: scale3d(1.03, 1.03, 1.03);
+    transform: scale3d(1.03, 1.03, 1.03);
+  }
+
+  80% {
+    -webkit-transform: scale3d(0.97, 0.97, 0.97);
+    transform: scale3d(0.97, 0.97, 0.97);
+  }
+
+  to {
+    opacity: 1;
+    -webkit-transform: scale3d(1, 1, 1);
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+@keyframes bounceIn {
+  from,
+  20%,
+  40%,
+  60%,
+  80%,
+  to {
+    -webkit-animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+
+  0% {
+    opacity: 0;
+    -webkit-transform: scale3d(0.3, 0.3, 0.3);
+    transform: scale3d(0.3, 0.3, 0.3);
+  }
+
+  20% {
+    -webkit-transform: scale3d(1.1, 1.1, 1.1);
+    transform: scale3d(1.1, 1.1, 1.1);
+  }
+
+  40% {
+    -webkit-transform: scale3d(0.9, 0.9, 0.9);
+    transform: scale3d(0.9, 0.9, 0.9);
+  }
+
+  60% {
+    opacity: 1;
+    -webkit-transform: scale3d(1.03, 1.03, 1.03);
+    transform: scale3d(1.03, 1.03, 1.03);
+  }
+
+  80% {
+    -webkit-transform: scale3d(0.97, 0.97, 0.97);
+    transform: scale3d(0.97, 0.97, 0.97);
+  }
+
+  to {
+    opacity: 1;
+    -webkit-transform: scale3d(1, 1, 1);
+    transform: scale3d(1, 1, 1);
+  }
+}
 </style>

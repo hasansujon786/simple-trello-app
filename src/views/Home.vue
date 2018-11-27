@@ -1,9 +1,21 @@
 <template>
   <div class="home container">
+    <!-- <h3>delIndex: {{ delIndex }}</h3> -->
+
+    <transition name="askdel">
+      <app-askdel v-if="askDel" >
+        <div class="mt-4 float-right">
+          <button @click.stop="askDel = false" class="btn mr-3 btn-secondary">Cancel</button>
+          <button @click.stop="askDelAns" class="btn btn-danger">Yes</button>
+        </div>
+      </app-askdel>       
+    </transition>
+    <div v-if="askDel" @click="askDel = false" class="askdel-fade"></div>
+
+
+
     <div class="main-grid">
-      <div>
         <app-newproject></app-newproject>
-      </div>
 
       <div @click="$router.push(`/project/${proj.id}`)" v-for="(proj, index) in projects" :key="proj.id" class="projects">
         <div @click.stop="delPorject(index)" class="delBoardBtn bg-danger">X</div>
@@ -14,7 +26,7 @@
             <!-- {{ proj.id }} -->
         </div>
       </div>
-      
+
       
     </div>
   </div>
@@ -23,12 +35,14 @@
 <script>
 // @ is an alias to /src
 import NewboardinputVue from '../components/Newboardinput.vue'
+import askDelmodelVue from '../components/askDelmodel.vue';
 
 export default {
   name: 'home',
   data() {
     return {
-      projectsId: this.$route.params.id
+      askDel: false,
+      delIndex: 0,
     }
   },
   computed: {
@@ -38,11 +52,18 @@ export default {
   },
   methods: {
     delPorject(index) {
-      this.$store.dispatch('delProjectNow', index)
+      this.askDel = true
+      this.delIndex = index
+      // this.$store.dispatch('delProjectNow', index)
+    },
+    askDelAns() {
+      this.askDel = false
+      this.$store.dispatch('delProjectNow', this.delIndex)
     }
   },
   components: {
-    appNewproject: NewboardinputVue
+    appNewproject: NewboardinputVue,
+    appAskdel: askDelmodelVue,
   }
 }
 </script>
@@ -63,7 +84,6 @@ export default {
   background: #C4C4C4
   &:hover
     background: #0092cc
-    // transform: scale(1.02)
     box-shadow: 0px 0px 15px #005e82
 
 .projects

@@ -17,10 +17,12 @@
     <draggable
       class="row"
       v-model="myBoardList"
-      :options="{group:'board'}"
+      :options="{group:'board', disabled: isDragOn}"
       @start="drag=true"
       @end="drag=false">
+
       <app-board
+        @disableDrag-em="disableDragNow"
         v-for="(board, boardIndex) in boards"
         :key="boardIndex"
         :board="board"
@@ -43,7 +45,7 @@ export default {
   data() {
     return {
       projectId: this.$route.params.id,
-      newBoardName: 'New task board',
+      isDragOn: false
     }
   },
   computed: {
@@ -59,9 +61,6 @@ export default {
     boards() {
       // returns all the boards from the selected project
       return this.project.boards
-    },
-    textAreas() {
-      return this.project.textAreas
     },
     myBoardList: {
       get() {
@@ -79,15 +78,18 @@ export default {
   methods: {
     addNewBoard() {
       this.$store.dispatch('addNewBoardNow', {
-        newBoardName: this.newBoardName,
+        newBoardName: 'Task Board',
         index: this.getProjIndex
       })
     },
     addNewTextArea() {
       this.$store.dispatch('addNewTextAreaNow', {
-        newTextAreaName: 'New text Area',
+        newTextAreaName: 'Text Area',
         projIdx: this.getProjIndex
       })
+    },
+    disableDragNow(value) {
+			this.isDragOn = value
     }
   },
   components: {
